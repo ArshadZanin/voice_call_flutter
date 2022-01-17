@@ -52,21 +52,69 @@ class _HomePageState extends State<HomePage> {
       });
     }));
     // Join channel with channel name as 123
+    await engine.enableAudio();
     await engine.joinChannel(Token, '123', null, 0);
+    print('done');
+  }
+  Future<void> disposePlatformState() async {
+    // Get microphone permission
+    await [Permission.microphone].request();
+
+    // Create RTC client instance
+    RtcEngineContext context = RtcEngineContext(appId);
+    var engine = await RtcEngine.createWithContext(context);
+    // Define event handling logic
+    engine.setEventHandler(RtcEngineEventHandler(
+        joinChannelSuccess: (String channel, int uid, int elapsed) {
+          print('joinChannelSuccess $channel $uid');
+          setState(() {
+            _joined = true;
+          });
+        }, userJoined: (int uid, int elapsed) {
+      print('userJoined $uid');
+      setState(() {
+        _remoteUid = uid;
+      });
+    }, userOffline: (int uid, UserOfflineReason reason) {
+      print('userOffline $uid');
+      setState(() {
+        _remoteUid = 0;
+      });
+    }));
+    // Join channel with channel name as 123
+    await engine.enableAudio();
+    // await engine.joinChannel(Token, '123', null, 0);
+    await engine.leaveChannel();
+    print('done');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: SizedBox(
-          child: Center(
-            child: ElevatedButton.icon(
-              onPressed: () {
-                initPlatformState();
-              },
-              icon: const Icon(Icons.mic),
-              label: const Text('Mic'),
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    initPlatformState();
+                  },
+                  icon: const Icon(Icons.mic),
+                  label: const Text('Mic On'),
+                ),
+              ),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    disposePlatformState();
+                  },
+                  icon: const Icon(Icons.mic_off),
+                  label: const Text('Mic Off'),
+                ),
+              ),
+            ],
           ),
         ));
   }
